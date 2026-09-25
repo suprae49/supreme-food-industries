@@ -1,0 +1,45 @@
+SUPREME FOOD INDUSTRY — PRICE UPDATE
+
+Rice price: NPR 110 per kg, for all three selectable varieties.
+25 kg bag: NPR 2,750. Two bags (50 kg): NPR 5,500.
+CSR contribution remains NPR 1 per kg (NPR 25 per bag); it is not
+added as an extra charge to the rice total.
+
+INSTALL
+1. Extract this ZIP.
+2. Replace these four files in the existing supreme-food-industry folder:
+   index.html
+   script.js
+   server.py
+   admin.html
+3. Restart/redeploy the Python server using your usual hosting process.
+4. Reload the page and check that one bag displays NPR 2,750.
+
+This is a replacement-files package, not a complete standalone website.
+Keep the existing assets, styles.css, auth.js, signup.html, login.html,
+polyglot, bin, data, and other project files. Do not replace or delete data/sfi.db.
+No native calculator rebuild is required.
+
+WHAT CHANGED
+- English and Nepali pages show the rice selling price.
+- The live calculator shows the rate and total, with an offline estimate.
+- Server calculations include the same sale price for Python, C, and C++.
+- New orders store the unit price and total in SQLite, calculated on the server.
+- Order confirmation and admin order rows show the total price.
+- Existing databases receive two new price columns automatically on startup.
+  Older orders retain their contents; their prices show a dash because the
+  original app never recorded a selling price. Old prices are not invented.
+
+VERIFIED LOCALLY
+- 1 kg = NPR 110; 25 kg = NPR 2,750; 50 kg = NPR 5,500.
+- Python fallback plus compiled original C and C++ calculator routes.
+- New order persistence and admin responses for each variety.
+- Client-supplied prices cannot override the server's selling price.
+- Migration preserves old records and can run repeatedly.
+- Fresh database startup and order saving.
+- Frontend calculations, both languages, offline/API-failure fallback,
+  and rapidly changing quantities; admin price rendering.
+
+Not deployed to your live site. Full visual review was not possible without
+styles.css and the remaining site assets. This update adds order pricing;
+the existing order-saving workflow does not process payments.

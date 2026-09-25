@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ne">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin · सुप्रिम खाद्य उद्योग</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="admin-page">
+    <header class="admin-top">
+      <div>
+        <p class="admin-kicker">Supreme Food Industry</p>
+        <h1>एडमिन प्यानल</h1>
+      </div>
+      <div class="admin-top-actions">
+        <span id="admin-user">…</span>
+        <a class="btn btn-ghost-dark" href="index.html">साइट</a>
+        <button type="button" class="btn btn-primary" id="admin-logout">लगआउट</button>
+      </div>
+    </header>
+
+    <section class="admin-stats" id="admin-stats">
+      <article><span>अर्डर</span><strong id="stat-orders">0</strong></article>
+      <article><span>बोरा</span><strong id="stat-bags">0</strong></article>
+      <article><span>के.जी.</span><strong id="stat-kg">0</strong></article>
+      <article><span>सन्देश</span><strong id="stat-inq">0</strong></article>
+    </section>
+
+    <section class="admin-section">
+      <div class="admin-section-head">
+        <h2>सबै अर्डरहरू</h2>
+        <button type="button" class="btn btn-ghost-dark" id="refresh-btn">रिफ्रेस</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>नाम</th>
+              <th>फोन</th>
+              <th>प्रकार</th>
+              <th>बोरा</th>
+              <th>के.जी.</th>
+              <th>प्रति के.जी. (रू.)</th>
+              <th>कुल मूल्य (रू.)</th>
+              <th>नोट</th>
+              <th>मिति</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr><td colspan="10">लोड हुँदै…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-section">
+      <h2>सम्पर्क सन्देशहरू</h2>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>नाम</th>
+              <th>फोन</th>
+              <th>सन्देश</th>
+              <th>मिति</th>
+            </tr>
+          </thead>
+          <tbody id="inq-body">
+            <tr><td colspan="5">लोड हुँदै…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <script src="auth.js"></script>
+    <script>
+      async function guard() {
+        const session = getSession();
+        if (!session) {
+          window.location.replace("login.html?next=admin.html");
+          return null;
+        }
+        const me = await api("/api/me");
+        if (!me.ok || !me.user?.is_admin) {
+          clearSession();
+          window.location.replace("login.html?next=admin.html");
+          return null;
+        }
+        setSession(me.user);
+        document.getElementById("admin-user").textContent =
+          `${me.user.name} · ${me.user.phone}`;
+        return me.user;
+      }
+
+      function fmtMoney(value) {
+        return value == null ? "—" : Number(value).toLocaleString("en-IN");
+      }
+
+      function fmtDate(value) {
+        try {
+          return new Date(value).toLocaleString();
+        } catch {
+          return value || "";
+        }
+      }
+
+      async function loadAdmin() {
+        const [stats, orders, inquiries] = await Promise.all([
+          api("/api/admin/stats"),
+          api("/api/admin/orders"),
+          api("/api/admin/inquiries"),
+        ]);
+
+        if (stats.ok) {
+          document.getElementById("stat-orders").textContent = stats.stats.orders;
+          document.getElementById("stat-bags").textContent = stats.stats.bags;
+          document.getElementById("stat-kg").textContent = Math.round(stats.stats.total_kg);
+          document.getElementById("stat-inq").textContent = stats.stats.inquiries;
+        }
+
+        const ordersBody = document.getElementById("orders-body");
+        if (orders.ok && orders.orders.length) {
+          ordersBody.innerHTML = orders.orders
+            .map(
+              (o) => `<tr>
+                <td>${o.id}</td>
+                <td>${escapeHtml(o.name)}</td>
+                <td><a href="tel:+977${o.phone}">${o.phone}</a></td>
+                <td>${escapeHtml(o.variety)}</td>
+                <td>${o.bags}</td>
+                <td>${o.total_kg}</td>
+                <td>${fmtMoney(o.price_per_kg_npr)}</td>
+                <td>${fmtMoney(o.total_price_npr)}</td>
+                <td>${escapeHtml(o.note || "—")}</td>
+                <td>${fmtDate(o.created_at)}</td>
+              </tr>`
+            )
+            .join("");
+        } else {
+          ordersBody.innerHTML = `<tr><td colspan="10">${orders.error || "अहिले कुनै अर्डर छैन।"}</td></tr>`;
+        }
+
+        const inqBody = document.getElementById("inq-body");
+        if (inquiries.ok && inquiries.inquiries.length) {
+          inqBody.innerHTML = inquiries.inquiries
+            .map(
+              (i) => `<tr>
+                <td>${i.id}</td>
+                <td>${escapeHtml(i.name)}</td>
+                <td><a href="tel:+977${i.phone}">${i.phone}</a></td>
+                <td>${escapeHtml(i.message || "—")}</td>
+                <td>${fmtDate(i.created_at)}</td>
+              </tr>`
+            )
+            .join("");
+        } else {
+          inqBody.innerHTML = `<tr><td colspan="5">${inquiries.error || "सन्देश छैन।"}</td></tr>`;
+        }
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
+
+      document.getElementById("admin-logout").addEventListener("click", async () => {
+        await logoutUser();
+        window.location.href = "login.html";
+      });
+      document.getElementById("refresh-btn").addEventListener("click", loadAdmin);
+
+      (async () => {
+        if (await guard()) await loadAdmin();
+      })();
+    </script>
+  </body>
+</html>

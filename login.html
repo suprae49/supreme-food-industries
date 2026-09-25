@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ne">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>लगइन · सुप्रिम खाद्य उद्योग</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="auth-page">
+    <div class="grain" aria-hidden="true"></div>
+    <div class="auth-shell">
+      <aside class="auth-visual" aria-hidden="true">
+        <img src="assets/facebook/photo1.jpg" alt="" />
+        <div class="auth-visual-copy">
+          <p class="auth-brand-ne">सुप्रिम खाद्य उद्योग</p>
+          <p class="auth-brand-en">Supreme Food Industry</p>
+        </div>
+      </aside>
+
+      <main class="auth-main">
+        <a class="auth-back" href="index.html">← गृहपृष्ठ</a>
+        <h1>लगइन</h1>
+        <form class="auth-form" id="login-form" novalidate>
+          <label>
+            <span>मोबाइल</span>
+            <input
+              type="tel"
+              name="phone"
+              inputmode="numeric"
+              placeholder="९८XXXXXXXX"
+              autocomplete="username"
+              required
+            />
+          </label>
+          <label>
+            <span>पासवर्ड</span>
+            <input
+              type="password"
+              name="password"
+              placeholder="••••"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <p class="auth-error" id="login-error" hidden></p>
+          <button class="btn btn-primary" type="submit">लगइन गर्नुहोस्</button>
+        </form>
+
+        <p class="auth-switch">
+          नयाँ हुनुहुन्छ?
+          <a href="signup.html">साइन अप गर्नुहोस्</a>
+        </p>
+        <p class="auth-demo-note">खाता Flask backend + SQLite मा सेभ हुन्छ।</p>
+      </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+      if (getSession()) {
+        window.location.replace("index.html");
+      }
+
+      const form = document.getElementById("login-form");
+      const errorEl = document.getElementById("login-error");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorEl.hidden = true;
+        const data = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        try {
+          const result = await loginUser({
+            phone: data.get("phone"),
+            password: data.get("password"),
+          });
+
+          if (!result.ok) {
+            errorEl.hidden = false;
+            errorEl.textContent = result.error;
+            return;
+          }
+
+          const params = new URLSearchParams(window.location.search);
+          const next = params.get("next");
+          if (result.user?.is_admin) {
+            window.location.href = next || "admin.html";
+          } else {
+            window.location.href = next || "index.html";
+          }
+        } catch {
+          errorEl.hidden = false;
+          errorEl.textContent = "सर्भरसँग जोडिन सकिएन।";
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
