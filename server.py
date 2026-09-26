@@ -516,7 +516,10 @@ def static_proxy(path: str):
     return send_from_directory(ROOT, "index.html")
 
 
-init_db()
+try:
+    init_db()
+except Exception as _e:
+    print("init_db warning:", _e)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5173"))
