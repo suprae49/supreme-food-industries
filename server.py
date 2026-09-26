@@ -19,12 +19,29 @@ from flask import Flask, g, jsonify, request, send_from_directory
 from werkzeug.security import check_password_hash, generate_password_hash
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
+# Vercel has a read-only filesystem except /tmp — use /tmp for SQLite there
+if os.environ.get("VERCEL"):
+    DATA_DIR = Path("/tmp/sfi-data")
+else:
+    DATA_DIR = ROOT / "data"
 DB_PATH = DATA_DIR / "sfi.db"
 BIN_DIR = ROOT / "bin"
 PRICE_PER_KG_NPR = 110
 sys.path.insert(0, str(ROOT / "polyglot" / "python"))
-from rice_calc import calc_bags  # noqa: E402
+try:
+    from rice_calc import calc_bags  # noqa: E402
+except ImportError:
+    def calc_bags(bags: int, kg_per_bag: float = 25.0) -> dict:
+        total = bags * kg_per_bag
+        return {
+            "ok": True,
+            "lang": "python",
+            "bags": bags,
+            "kg_per_bag": kg_per_bag,
+            "total_kg": round(total, 2),
+            "total_quintal": round(total / 100.0, 3),
+            "csr_fund_npr": bags * 25,
+        }
 
 app = Flask(__name__, static_folder=str(ROOT), static_url_path="")
 app.secret_key = os.environ.get("SFI_SECRET", "supreme-food-industry-demo-secret")
